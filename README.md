@@ -44,8 +44,6 @@ func main() {
 
 > For usage with a non int key, one workaround is to use a lookup table to map the key to a unique int and map back after sampling.
 For a simple example with string keys, refer to ```example.go``` in the ```example``` folder.
-Alternatively, you could implement it with generics and submit a pull request.
-
 
 ## Benchmarking
 
