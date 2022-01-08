@@ -6,6 +6,7 @@ The algorithm is able to generate a random sample in O(1) time and is ideal for 
 The preprocessing step for probability table creation is O(n) time. For floating point rounding errors, a negligible error is to be expected (<0.05% for 10000000 iterations).
 
 ***
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/geraldywy/walker-alias)](https://pkg.go.dev/github.com/geraldywy/walker-alias)
 [![Go Report Card](https://goreportcard.com/badge/github.com/geraldywy/walker-alias)](https://goreportcard.com/report/github.com/geraldywy/walker-alias)
 [![Coverage Status](https://coveralls.io/repos/github/geraldywy/walker-alias/badge.svg?branch=master)](https://coveralls.io/github/geraldywy/walker-alias?branch=master)
 

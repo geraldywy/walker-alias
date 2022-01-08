@@ -3,6 +3,7 @@ package walkeralias
 import (
 	"math"
 	"math/rand"
+	"os"
 	"sort"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ func TestWalkerAlias_Random(t *testing.T) {
 		setupFunc        func(pMap map[int]float64) randomizer
 		iterations       int
 		allowedThreshold float64 // allowable probability variance, from [0-1]
+		skipInCI bool // indicate whether to skip test in CI to prevent timeouts
 	}{
 		{
 			name: "[WalkerAlias] no floating point rounding errors",
@@ -29,6 +31,7 @@ func TestWalkerAlias_Random(t *testing.T) {
 			},
 			iterations:       10000000,
 			allowedThreshold: 0.0005, // 0.05%
+			skipInCI: false,
 		},
 		{
 			name: "[WalkerAlias] with floating point rounding errors",
@@ -47,6 +50,7 @@ func TestWalkerAlias_Random(t *testing.T) {
 			},
 			iterations:       10000000,
 			allowedThreshold: 0.0005,
+			skipInCI: false,
 		},
 		{
 			name: "[WalkerAlias] more iterations should reflect a tighter threshold", // takes ~50s to run
@@ -61,6 +65,7 @@ func TestWalkerAlias_Random(t *testing.T) {
 			},
 			iterations:       1000000000,
 			allowedThreshold: 0.00005, // 0.005%
+			skipInCI: true,
 		},
 		{
 			name: "[WalkerAlias] more iterations should reflect a tighter threshold again", // takes ~50s to run
@@ -77,8 +82,10 @@ func TestWalkerAlias_Random(t *testing.T) {
 				w := NewWalkerAlias(pMap, time.Now().Unix())
 				return w
 			},
+
 			iterations:       1000000000,
 			allowedThreshold: 0.00005,
+			skipInCI: true,
 		},
 		{
 			name: "[NaiveSearch] no floating point rounding errors",
@@ -94,6 +101,7 @@ func TestWalkerAlias_Random(t *testing.T) {
 			},
 			iterations:       10000000,
 			allowedThreshold: 0.0005, // 0.05%
+			skipInCI: false,
 		},
 		{
 			name: "[BinarySearchPartitions] no floating point rounding errors",
@@ -109,12 +117,15 @@ func TestWalkerAlias_Random(t *testing.T) {
 			},
 			iterations:       10000000,
 			allowedThreshold: 0.0005, // 0.05%
+			skipInCI: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.skipInCI && os.Getenv("CI") != "" {
+				t.Skip("Skipping testing in CI environment")
+			}
 			randomizer := tt.setupFunc(tt.pMap)
-
 			actualPMap := make(map[int]float64)
 			for i := 0; i < tt.iterations; i++ {
 				actualPMap[randomizer.Random()] += float64(1) / float64(tt.iterations)
