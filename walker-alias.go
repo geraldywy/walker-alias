@@ -4,7 +4,7 @@ import (
 	"math/rand"
 )
 
-// WalkerAlias holds an internal rand reference instead of sharing with global rand.
+// walkerAlias holds an internal rand reference instead of sharing with global rand.
 type walkerAlias struct {
 	buckets []*bucket
 	r       *rand.Rand
