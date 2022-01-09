@@ -178,11 +178,12 @@ func BenchmarkWalkerAlias_Random(b *testing.B) {
 			},
 		},
 	}
+	pMap := make(map[int]float64)
+	for i := 1; i <= 10000000; i++ { // 10 million entries
+		pMap[i] = float64(i)
+	}
+
 	for _, tt := range tests {
-		pMap := make(map[int]float64)
-		for i := 1; i <= 10000000; i++ { // 10 million entries
-			pMap[i] = float64(i)
-		}
 		b.Run(tt.name, func(b *testing.B) {
 			r := tt.setupFunc(pMap)
 			for i := 0; i < b.N; i++ {
