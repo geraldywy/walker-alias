@@ -33,8 +33,11 @@ func main() {
 		1: 6.5,
 		2: 10,
 	}
-	w := wa.NewWalkerAlias(pMap, time.Now().Unix()) // init with weights and a random seed
-
+	w, err := wa.NewWalkerAlias(pMap, time.Now().Unix()) // init with weights and a random seed
+	if err != nil {
+		panic(err)
+	}
+	
 	for i := 0; i < 5; i++ {
 		randomKey := w.Random() // generates a random key in O(1)
 		fmt.Println(randomKey)
