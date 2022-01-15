@@ -13,10 +13,11 @@ func TestWalkerAlias_Random(t *testing.T) {
 	tests := []struct {
 		name             string
 		pMap             map[int]float64
-		setupFunc        func(pMap map[int]float64) randomizer
+		setupFunc        func(pMap map[int]float64) (randomizer, error)
+		expectedErr      error
 		iterations       int
 		allowedThreshold float64 // allowable probability variance, from [0-1]
-		skipInCI bool // indicate whether to skip test in CI to prevent timeouts
+		skipInCI         bool    // indicate whether to skip test in CI to prevent timeouts
 	}{
 		{
 			name: "[WalkerAlias] no floating point rounding errors",
@@ -25,13 +26,13 @@ func TestWalkerAlias_Random(t *testing.T) {
 				1: 6.5,
 				2: 10,
 			},
-			setupFunc: func(pMap map[int]float64) randomizer {
-				w := NewWalkerAlias(pMap, time.Now().Unix())
-				return w
+			setupFunc: func(pMap map[int]float64) (randomizer, error) {
+				return NewWalkerAlias(pMap, time.Now().Unix())
 			},
+			expectedErr:      nil,
 			iterations:       10000000,
 			allowedThreshold: 0.0005, // 0.05%
-			skipInCI: false,
+			skipInCI:         false,
 		},
 		{
 			name: "[WalkerAlias] with floating point rounding errors",
@@ -44,13 +45,65 @@ func TestWalkerAlias_Random(t *testing.T) {
 				320: 1,
 				111: 2,
 			},
-			setupFunc: func(pMap map[int]float64) randomizer {
-				w := NewWalkerAlias(pMap, time.Now().Unix())
-				return w
+			setupFunc: func(pMap map[int]float64) (randomizer, error) {
+				return NewWalkerAlias(pMap, time.Now().Unix())
 			},
+			expectedErr:      nil,
 			iterations:       10000000,
 			allowedThreshold: 0.0005,
-			skipInCI: false,
+			skipInCI:         false,
+		},
+		{
+			name: "[WalkerAlias] negative probabilities should return error",
+			pMap: map[int]float64{
+				0: -10000,
+				1: 6.5,
+				2: 10,
+			},
+			setupFunc: func(pMap map[int]float64) (randomizer, error) {
+				return NewWalkerAlias(pMap, time.Now().Unix())
+			},
+			expectedErr:      ErrIllegalProbMap,
+			iterations:       0,
+			allowedThreshold: 0,
+			skipInCI:         false,
+		},
+		{
+			name: "[WalkerAlias] zero sum probabilities should return error",
+			pMap: map[int]float64{
+				0: 0,
+				1: 0,
+				2: 0,
+			},
+			setupFunc: func(pMap map[int]float64) (randomizer, error) {
+				return NewWalkerAlias(pMap, time.Now().Unix())
+			},
+			expectedErr:      ErrIllegalProbMap,
+			iterations:       0,
+			allowedThreshold: 0,
+			skipInCI:         false,
+		},
+		{
+			name: "[WalkerAlias] nil probabilities should return error",
+			pMap: nil,
+			setupFunc: func(pMap map[int]float64) (randomizer, error) {
+				return NewWalkerAlias(pMap, time.Now().Unix())
+			},
+			expectedErr:      ErrIllegalProbMap,
+			iterations:       0,
+			allowedThreshold: 0,
+			skipInCI:         false,
+		},
+		{
+			name: "[WalkerAlias] empty probabilities should return error",
+			pMap: map[int]float64{},
+			setupFunc: func(pMap map[int]float64) (randomizer, error) {
+				return NewWalkerAlias(pMap, time.Now().Unix())
+			},
+			expectedErr:      ErrIllegalProbMap,
+			iterations:       0,
+			allowedThreshold: 0,
+			skipInCI:         false,
 		},
 		{
 			name: "[WalkerAlias] more iterations should reflect a tighter threshold", // takes ~50s to run
@@ -59,13 +112,13 @@ func TestWalkerAlias_Random(t *testing.T) {
 				1: 6.5,
 				2: 10,
 			},
-			setupFunc: func(pMap map[int]float64) randomizer {
-				w := NewWalkerAlias(pMap, time.Now().Unix())
-				return w
+			setupFunc: func(pMap map[int]float64) (randomizer, error) {
+				return NewWalkerAlias(pMap, time.Now().Unix())
 			},
+			expectedErr:      nil,
 			iterations:       1000000000,
 			allowedThreshold: 0.00005, // 0.005%
-			skipInCI: true,
+			skipInCI:         true,
 		},
 		{
 			name: "[WalkerAlias] more iterations should reflect a tighter threshold again", // takes ~50s to run
@@ -78,14 +131,13 @@ func TestWalkerAlias_Random(t *testing.T) {
 				320: 1,
 				111: 2,
 			},
-			setupFunc: func(pMap map[int]float64) randomizer {
-				w := NewWalkerAlias(pMap, time.Now().Unix())
-				return w
+			setupFunc: func(pMap map[int]float64) (randomizer, error) {
+				return NewWalkerAlias(pMap, time.Now().Unix())
 			},
-
+			expectedErr:      nil,
 			iterations:       1000000000,
 			allowedThreshold: 0.00005,
-			skipInCI: true,
+			skipInCI:         true,
 		},
 		{
 			name: "[NaiveSearch] no floating point rounding errors",
@@ -95,13 +147,12 @@ func TestWalkerAlias_Random(t *testing.T) {
 				2: 3,
 				3: 4,
 			},
-			setupFunc: func(pMap map[int]float64) randomizer {
-				n := newNaiveSearch(pMap, time.Now().Unix())
-				return n
+			setupFunc: func(pMap map[int]float64) (randomizer, error) {
+				return newNaiveSearch(pMap, time.Now().Unix()), nil
 			},
 			iterations:       10000000,
 			allowedThreshold: 0.0005, // 0.05%
-			skipInCI: false,
+			skipInCI:         false,
 		},
 		{
 			name: "[BinarySearchPartitions] no floating point rounding errors",
@@ -111,13 +162,12 @@ func TestWalkerAlias_Random(t *testing.T) {
 				2: 3,
 				3: 4,
 			},
-			setupFunc: func(pMap map[int]float64) randomizer {
-				n := newNaiveSearch(pMap, time.Now().Unix())
-				return n
+			setupFunc: func(pMap map[int]float64) (randomizer, error) {
+				return newBSearchPartitions(pMap, time.Now().Unix()), nil
 			},
 			iterations:       10000000,
 			allowedThreshold: 0.0005, // 0.05%
-			skipInCI: false,
+			skipInCI:         false,
 		},
 	}
 	for _, tt := range tests {
@@ -125,7 +175,13 @@ func TestWalkerAlias_Random(t *testing.T) {
 			if tt.skipInCI && os.Getenv("CI") != "" {
 				t.Skip("Skipping testing in CI environment")
 			}
-			randomizer := tt.setupFunc(tt.pMap)
+			randomizer, err := tt.setupFunc(tt.pMap)
+			if err != tt.expectedErr {
+				t.Errorf("when init randomizer, got err: %v, expected err: %v", err, tt.expectedErr)
+			}
+			if tt.expectedErr != nil {
+				return
+			}
 			actualPMap := make(map[int]float64)
 			for i := 0; i < tt.iterations; i++ {
 				actualPMap[randomizer.Random()] += float64(1) / float64(tt.iterations)
@@ -173,7 +229,7 @@ func BenchmarkWalkerAlias_Random(b *testing.B) {
 		{
 			name: "walker alias",
 			setupFunc: func(pMap map[int]float64) randomizer {
-				w := NewWalkerAlias(pMap, time.Now().Unix())
+				w, _ := NewWalkerAlias(pMap, time.Now().Unix())
 				return w
 			},
 		},

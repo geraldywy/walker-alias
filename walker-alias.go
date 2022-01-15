@@ -1,6 +1,7 @@
 package walkeralias
 
 import (
+	"errors"
 	"math/rand"
 )
 
@@ -10,12 +11,14 @@ type walkerAlias struct {
 	r       *rand.Rand
 }
 
+var ErrIllegalProbMap = errors.New("illegal probability map values")
+
 // NewWalkerAlias accepts a map {key: probability} and a seed to init a new rand for its own use.
 // Returns a reference to a WalkerAlias object to use
 // An example of a probabilityMap: {1: 2, 2: 3}, the ratio of selecting key 1 and key 2 is 0.4 and 0.6 respectively
 // WalkerAlias involves an O(n) preprocessing step to generate a probability table.
 // Subsequent sampling are all O(1).
-func NewWalkerAlias(probabilityMap map[int]float64, seed int64) *walkerAlias {
+func NewWalkerAlias(probabilityMap map[int]float64, seed int64) (*walkerAlias, error) {
 	n := len(probabilityMap)
 	buckets := make([]*bucket, 0)
 
@@ -23,6 +26,11 @@ func NewWalkerAlias(probabilityMap map[int]float64, seed int64) *walkerAlias {
 	for _, w := range probabilityMap {
 		sumWeights += w
 	}
+
+	if sumWeights <= 0 || len(probabilityMap) == 0 {
+		return nil, ErrIllegalProbMap
+	}
+
 	for k, w := range probabilityMap {
 		prob := w * float64(n) / sumWeights
 		buckets = append(buckets, newBucket(k, prob))
@@ -50,7 +58,7 @@ func NewWalkerAlias(probabilityMap map[int]float64, seed int64) *walkerAlias {
 		}
 	}
 
-	return &walkerAlias{buckets: buckets, r: rand.New(rand.NewSource(seed))}
+	return &walkerAlias{buckets: buckets, r: rand.New(rand.NewSource(seed))}, nil
 }
 
 // Random returns a random key following the given probability

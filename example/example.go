@@ -14,7 +14,10 @@ func main() {
 		1: 6.5,
 		2: 10,
 	}
-	w := wa.NewWalkerAlias(pMap, time.Now().Unix())
+	w, err := wa.NewWalkerAlias(pMap, time.Now().Unix())
+	if err != nil {
+		panic(err)
+	}
 	freq := make(map[string]int)
 	for i := 0; i < 1000000; i++ {
 		freq[items[w.Random()]]++
